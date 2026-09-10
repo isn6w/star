@@ -1,4 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3333/api";
+const configuredApiUrl = import.meta.env.VITE_API_URL || "http://localhost:3333/api";
+const API_URL = configuredApiUrl.replace(/\/+$/, "").endsWith("/api")
+  ? configuredApiUrl.replace(/\/+$/, "")
+  : `${configuredApiUrl.replace(/\/+$/, "")}/api`;
 
 if (import.meta.env.PROD && API_URL.includes("localhost")) {
   console.warn("VITE_API_URL ainda aponta para localhost. Configure a URL pública da API no painel da Vercel e faça um novo deploy.");
