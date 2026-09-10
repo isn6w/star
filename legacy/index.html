@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StarTV — Painel de clientes</title>
+  <link rel="icon" href="assets/logo-startv.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- TELA DE CARREGAMENTO -->
+  <div id="boot-screen" class="page boot-wrap">
+    <img src="assets/logo-startv.png" alt="StarTV" class="boot-logo" />
+  </div>
+
+  <!-- TELA DE LOGIN / CADASTRO -->
+  <div id="auth-screen" class="page hidden">
+    <div class="aurora-wash"></div>
+    <div class="gradient-blob gradient-blob-anim blob-a blob-blue"></div>
+    <div class="gradient-blob gradient-blob-anim blob-b blob-pink"></div>
+
+    <div class="auth-wrap">
+      <img src="assets/logo-startv.png" alt="StarTV" class="auth-logo" />
+
+      <div class="glass-panel auth-card">
+        <h1 id="auth-title" class="auth-title gradient-text">Entrar no painel</h1>
+        <p id="auth-subtitle" class="auth-subtitle">
+          Acesse com seu usuário para ver seus clientes cadastrados.
+        </p>
+        <p id="auth-hint" class="auth-hint">
+          Acesso temporário: usuário <strong>admin</strong>, senha <strong>admin</strong>.
+        </p>
+
+        <form id="auth-form" novalidate>
+          <div class="field">
+            <label for="auth-username">Usuário</label>
+            <input id="auth-username" class="glass-input" placeholder="seu.usuario" autocomplete="username" />
+          </div>
+          <div class="field">
+            <label for="auth-password">Senha</label>
+            <input id="auth-password" type="password" class="glass-input" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+          <div class="field hidden" id="auth-confirm-field">
+            <label for="auth-confirm">Confirmar senha</label>
+            <input id="auth-confirm" type="password" class="glass-input" placeholder="••••••••" autocomplete="new-password" />
+          </div>
+
+          <p id="auth-error" class="error-text hidden"></p>
+
+          <button type="submit" id="auth-submit" class="glass-btn-primary full">Entrar</button>
+        </form>
+
+        <p class="auth-switch">
+          <span id="auth-switch-text">Ainda não tem conta?</span>
+          <span id="auth-switch-link" class="auth-link">Criar conta</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAINEL PRINCIPAL -->
+  <div id="main-screen" class="page hidden">
+    <div class="gradient-blob blob-blue"></div>
+    <div class="gradient-blob blob-pink"></div>
+
+    <header class="glass-panel topbar">
+      <div class="topbar-left">
+        <img src="assets/logo-startv.png" alt="StarTV" class="header-logo" />
+      </div>
+      <div class="topbar-right">
+        <span class="user-tag"><span class="user-dot"></span><span id="user-tag-name"></span></span>
+        <button id="btn-new-client" class="glass-btn-primary">+ Cadastrar cliente</button>
+        <button id="btn-logout" class="glass-btn-ghost">Sair</button>
+      </div>
+    </header>
+
+    <div class="search-wrap">
+      <h2 class="page-title gradient-text">Seus clientes</h2>
+      <div class="search-shell" id="search-shell">
+        <span class="search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="5.5" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M16 16L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <input id="search-input" class="search-input" placeholder="Buscar cliente" />
+      </div>
+      <span id="count-tag" class="count-tag"></span>
+    </div>
+
+    <main id="clients-grid" class="grid"></main>
+  </div>
+
+  <!-- MODAL DE CADASTRO / EDIÇÃO DE CLIENTE -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="glass-panel modal-card" id="modal-card">
+      <div class="panel-title-row">
+        <h2 id="modal-title" class="panel-title gradient-text">Novo cliente</h2>
+        <button type="button" id="btn-close-modal" class="glass-btn-ghost">Fechar</button>
+      </div>
+
+      <form id="client-form" novalidate>
+        <div class="field">
+          <label for="f-nome">Nome do cliente</label>
+          <input id="f-nome" class="glass-input" placeholder="Ex.: João Pereira" />
+          <p class="error-text hidden" id="err-nome"></p>
+        </div>
+
+        <div class="link-group">
+          <div class="link-group-header">
+            <div class="link-group-label">
+              Dispositivos do cliente
+              <span class="link-group-hint">cadastre um ou mais MACs para o mesmo cliente</span>
+            </div>
+            <button type="button" id="btn-add-mac" class="glass-btn-ghost small-btn">+ Adicionar MAC</button>
+          </div>
+
+          <div id="mac-rows" class="mac-rows"></div>
+        </div>
+
+        <div class="field">
+          <label for="f-key">Key</label>
+          <input id="f-key" class="glass-input mono" placeholder="Key de ativação" />
+          <p class="error-text hidden" id="err-key"></p>
+        </div>
+
+        <button type="submit" id="confirm-btn" class="glass-btn-primary confirm-btn full" aria-label="Confirmar cadastro" aria-busy="false">
+          <span class="confirm-face" id="confirm-face">Confirmar cadastro</span>
+        </button>
+        <span id="confirm-status" class="sr-only" role="status" aria-live="polite"></span>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# Dependências e builds
+**/node_modules/
+**/dist/
+**/.vite/
+
+# Segredos locais
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Backups locais
+backend/backups/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema/editor
+.DS_Store
+.vscode/
