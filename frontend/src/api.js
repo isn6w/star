@@ -1,5 +1,9 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3333/api";
 
+if (import.meta.env.PROD && API_URL.includes("localhost")) {
+  console.warn("VITE_API_URL ainda aponta para localhost. Configure a URL pública da API no painel da Vercel e faça um novo deploy.");
+}
+
 let accessToken = sessionStorage.getItem("startv:access-token");
 let refreshToken = sessionStorage.getItem("startv:refresh-token");
 
@@ -26,7 +30,15 @@ async function request(path, options = {}, retry = true) {
   headers.set("Content-Type", "application/json");
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
 
-  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  let response;
+  try {
+    response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  } catch (error) {
+    if (import.meta.env.PROD && API_URL.includes("localhost")) {
+      throw new Error("A API de produção não está configurada. Defina VITE_API_URL na Vercel e publique novamente.");
+    }
+    throw new Error(`Não foi possível conectar à API (${API_URL}). Verifique se a API está online e se o CORS está configurado.`);
+  }
   if (response.status === 401 && retry && refreshToken) {
     try {
       await refreshSession();

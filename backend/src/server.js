@@ -21,7 +21,7 @@ if (!jwtSecret || jwtSecret.length < 32) {
 
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5500")
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => origin.trim().replace(/\/$/, ""))
   .filter(Boolean);
 
 app.use(helmet());
