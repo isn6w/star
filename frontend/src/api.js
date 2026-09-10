@@ -48,8 +48,16 @@ async function request(path, options = {}, retry = true) {
     }
   }
 
-  const payload = response.status === 204 ? null : await response.json().catch(() => null);
-  if (!response.ok) throw new Error(payload?.error || "Não foi possível concluir a operação.");
+  const contentType = response.headers.get("content-type") || "";
+  const payload = response.status === 204
+    ? null
+    : contentType.includes("application/json")
+      ? await response.json().catch(() => null)
+      : null;
+  if (!response.ok) {
+    const detail = payload?.error || `A API respondeu com HTTP ${response.status}.`;
+    throw new Error(`${detail} Endpoint: ${API_URL}${path}`);
+  }
   return payload;
 }
 
