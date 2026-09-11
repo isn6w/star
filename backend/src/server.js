@@ -1,5 +1,5 @@
-import "dotenv/config";
-import { createHash, randomBytes } from "node:crypto";
+import dotenv from "dotenv";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -8,7 +8,9 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
-import { randomUUID } from "node:crypto";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+dotenv.config({ path: fileURLToPath(new URL("../.env", import.meta.url)) });
 
 const app = express();
 const prisma = new PrismaClient();
@@ -388,7 +390,7 @@ app.use((error, req, res, _next) => {
 
 export { app, prisma };
 
-const isMainModule = process.argv[1] && import.meta.url === new URL(process.argv[1], "file://").href;
+const isMainModule = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 const server = isMainModule ? app.listen(port, () => console.log(JSON.stringify({ event: "server_started", port }))) : null;
 
 async function shutdown(signal) {

@@ -1,0 +1,4 @@
+{
+  "watch": ["src"],
+  "ignore": ["prisma", "test", "backups"]
+}
