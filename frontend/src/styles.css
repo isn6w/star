@@ -13,6 +13,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .auth-card { z-index: 1; width: min(100%, 410px); padding: 40px; border: 1px solid #ffffff1f; border-radius: 24px; background: #101a2be6; box-shadow: 0 30px 80px #0008, inset 0 1px #ffffff18; backdrop-filter: blur(20px); }
 .brand-mark { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; background: linear-gradient(135deg, #62adff, #db62c8); font-size: 22px; font-weight: 700; box-shadow: 0 12px 30px #3c86ff55; }
 .brand-mark.small { width: 36px; height: 36px; border-radius: 11px; font-size: 18px; line-height: 1; place-items: center; }
+.brand .brand-mark.small { display: grid; flex: 0 0 36px; place-items: center; line-height: 1; }
 .eyebrow { margin: 20px 0 8px; color: #80baff; font-size: 11px; font-weight: 700; letter-spacing: .14em; }
 h1, h2, p { margin-top: 0; } h1 { margin-bottom: 10px; font-size: clamp(28px, 5vw, 42px); letter-spacing: -.04em; } h2 { margin-bottom: 4px; font-size: 18px; }
 .muted { color: #9ba9be; line-height: 1.55; }
@@ -86,6 +87,7 @@ select option { color: #101827; } input:focus, select:focus { border-color: #72b
 .account-danger-zone strong { color: #ffb0bd; }
 .account-danger-zone span { color: #9c8790; font-size: 12px; }
 .danger-button--box { width: fit-content; padding: 9px 13px; border: 1px solid #ff8b9d45; border-radius: 9px; background: #ff789d12; }
+.button-icon { display: inline-grid; width: 1.1em; height: 1.1em; place-items: center; margin-right: 4px; font-size: 1.05em; line-height: 1; }
 .confirm-layer { z-index: 30; }
 .confirm-dialog { width: min(100%, 430px); padding: 26px; border: 1px solid #ff8b9d40; border-radius: 18px; background: #111b2bf7; box-shadow: 0 30px 90px #000b; }
 .confirm-dialog h2 { font-size: 23px; }
