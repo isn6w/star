@@ -12,7 +12,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .auth-glow--pink { background: #db4dba; right: -180px; bottom: 4%; animation-delay: -4s; }
 .auth-card { z-index: 1; width: min(100%, 410px); padding: 40px; border: 1px solid #ffffff1f; border-radius: 24px; background: #101a2be6; box-shadow: 0 30px 80px #0008, inset 0 1px #ffffff18; backdrop-filter: blur(20px); }
 .brand-mark { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; background: linear-gradient(135deg, #62adff, #db62c8); font-size: 22px; font-weight: 700; box-shadow: 0 12px 30px #3c86ff55; }
-.brand-mark.small { width: 36px; height: 36px; border-radius: 11px; font-size: 18px; }
+.brand-mark.small { width: 36px; height: 36px; border-radius: 11px; font-size: 18px; line-height: 1; place-items: center; }
 .eyebrow { margin: 20px 0 8px; color: #80baff; font-size: 11px; font-weight: 700; letter-spacing: .14em; }
 h1, h2, p { margin-top: 0; } h1 { margin-bottom: 10px; font-size: clamp(28px, 5vw, 42px); letter-spacing: -.04em; } h2 { margin-bottom: 4px; font-size: 18px; }
 .muted { color: #9ba9be; line-height: 1.55; }
@@ -82,6 +82,14 @@ select option { color: #101827; } input:focus, select:focus { border-color: #72b
 .sort-control > span { color: #80baff; font-size: 18px; }
 .expiry-line { display: flex; align-items: center; gap: 7px; margin-top: 12px; color: #8fbfff; font-size: 12px; }
 .expiry-notice { border-color: #f3c16b45; color: #f8d18c; background: #f3c16b0d; }
+.account-danger-zone { display: grid; gap: 6px; margin-top: 28px; padding-top: 20px; border-top: 1px solid #ff8b9d2b; }
+.account-danger-zone strong { color: #ffb0bd; }
+.account-danger-zone span { color: #9c8790; font-size: 12px; }
+.danger-button--box { width: fit-content; padding: 9px 13px; border: 1px solid #ff8b9d45; border-radius: 9px; background: #ff789d12; }
+.confirm-layer { z-index: 30; }
+.confirm-dialog { width: min(100%, 430px); padding: 26px; border: 1px solid #ff8b9d40; border-radius: 18px; background: #111b2bf7; box-shadow: 0 30px 90px #000b; }
+.confirm-dialog h2 { font-size: 23px; }
+.confirm-dialog input { margin-top: 10px; }
 .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .form-grid .field-hint { color: #8190a5; font-size: 10px; font-weight: 400; }
 .subscription-fields { grid-template-columns: 1fr 1fr; }

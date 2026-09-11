@@ -95,6 +95,14 @@ export function getMe() {
   return request("/me");
 }
 
+export function updateMe(input) {
+  return request("/me", { method: "PATCH", body: JSON.stringify(input) });
+}
+
+export function deleteMe(currentPassword) {
+  return request("/me", { method: "DELETE", body: JSON.stringify({ currentPassword }) });
+}
+
 export function getClients({ search = "", page = 1, pageSize = 12 } = {}) {
   const params = new URLSearchParams({ page, pageSize });
   if (search.trim()) params.set("search", search.trim());

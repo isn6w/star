@@ -48,6 +48,23 @@ test("login retorna nova sessão com bcrypt e JWT", async () => {
   assert.ok(response.body.refreshToken);
 });
 
+test("permite editar conta com senha atual e excluir conta com senha", async () => {
+  const updated = await api.patch("/api/me").set("Authorization", `Bearer ${token}`).send({
+    username: user.username,
+    email: user.email,
+    currentPassword: user.password,
+    newPassword: "TesteSeguro2026!",
+  });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.user.username, user.username);
+
+  const deleteUser = uniqueUser();
+  const created = await api.post("/api/auth/register").send(deleteUser);
+  assert.equal(created.status, 201);
+  const deleted = await api.delete("/api/me").set("Authorization", `Bearer ${created.body.accessToken}`).send({ currentPassword: deleteUser.password });
+  assert.equal(deleted.status, 204);
+});
+
 test("validação rejeita cliente sem dispositivos válidos", async () => {
   const response = await api.post("/api/clients").set("Authorization", `Bearer ${token}`).send({ name: "Inválido", key: "KEY", devices: [] });
   assert.equal(response.status, 400);

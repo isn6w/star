@@ -104,6 +104,13 @@ const authSchema = z.object({
 });
 
 const refreshSchema = z.object({ refreshToken: z.string().min(40).max(200) });
+const accountUpdateSchema = z.object({
+  username: z.string().trim().min(3).max(60),
+  email: z.string().trim().email().max(180).optional().or(z.literal("")).default(""),
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8).max(200).optional().or(z.literal("")),
+});
+const accountDeleteSchema = z.object({ currentPassword: z.string().min(1) });
 
 function normalizeMac(raw) {
   const digits = raw.replace(/[^0-9a-f]/gi, "").toUpperCase();
@@ -272,6 +279,43 @@ app.get("/api/me", authRequired, async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { id: req.auth.sub } });
     if (!user) return res.status(401).json({ error: "Usuário não encontrado." });
     return res.json({ user: formatUser(user) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.patch("/api/me", authRequired, async (req, res, next) => {
+  try {
+    const input = accountUpdateSchema.parse(req.body);
+    const current = await prisma.user.findUnique({ where: { id: req.auth.sub } });
+    if (!current || !(await bcrypt.compare(input.currentPassword, current.passwordHash))) {
+      return res.status(401).json({ error: "Senha atual incorreta." });
+    }
+    const data = {
+      username: input.username.toLowerCase(),
+      email: input.email.toLowerCase(),
+      ...(input.newPassword ? { passwordHash: await bcrypt.hash(input.newPassword, 12) } : {}),
+    };
+    const user = await prisma.user.update({ where: { id: current.id }, data });
+    if (input.newPassword) {
+      await prisma.refreshToken.updateMany({ where: { userId: current.id, revokedAt: null }, data: { revokedAt: new Date() } });
+    }
+    return res.json({ user: formatUser(user) });
+  } catch (error) {
+    if (error?.code === "P2002") return res.status(409).json({ error: "Usuário ou e-mail já cadastrado." });
+    return next(error);
+  }
+});
+
+app.delete("/api/me", authRequired, async (req, res, next) => {
+  try {
+    const input = accountDeleteSchema.parse(req.body);
+    const current = await prisma.user.findUnique({ where: { id: req.auth.sub } });
+    if (!current || !(await bcrypt.compare(input.currentPassword, current.passwordHash))) {
+      return res.status(401).json({ error: "Senha atual incorreta." });
+    }
+    await prisma.user.delete({ where: { id: current.id } });
+    return res.status(204).send();
   } catch (error) {
     return next(error);
   }
