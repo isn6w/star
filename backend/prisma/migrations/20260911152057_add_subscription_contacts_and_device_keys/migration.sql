@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE "Client" ADD COLUMN     "email" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "notifyBeforeDays" INTEGER NOT NULL DEFAULT 3,
+ADD COLUMN     "phone" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "subscriptionEndsAt" TIMESTAMP(3),
+ALTER COLUMN "key" SET DEFAULT '';
+
+-- AlterTable
+ALTER TABLE "Device" ADD COLUMN     "key" TEXT NOT NULL DEFAULT '';

@@ -71,6 +71,25 @@ test("CRUD cria cliente com múltiplos dispositivos", async () => {
   deviceIds = response.body.data.devices.map((device) => device.id);
 });
 
+test("aceita key opcional por dispositivo e normaliza contatos e vencimento", async () => {
+  const response = await api.post("/api/clients").set("Authorization", `Bearer ${token}`).send({
+    name: "Cliente Assinatura",
+    key: "",
+    email: "CLIENTE@EXAMPLE.COM",
+    phone: "11987654321",
+    subscriptionEndsAt: "2030-01-30T23:59:59.000Z",
+    notifyBeforeDays: 3,
+    devices: [{ mac: "001A2B3C4D83", key: "", app: "IBO Pro", type: "tv", brand: "Samsung" }],
+  });
+  assert.equal(response.status, 201);
+  assert.equal(response.body.data.key, "");
+  assert.equal(response.body.data.email, "cliente@example.com");
+  assert.equal(response.body.data.phone, "(11) 98765-4321");
+  assert.equal(response.body.data.notifyBeforeDays, 3);
+  assert.equal(response.body.data.devices[0].key, "");
+  await api.delete(`/api/clients/${response.body.data.id}`).set("Authorization", `Bearer ${token}`);
+});
+
 test("busca e pagina clientes", async () => {
   const response = await api.get("/api/clients?page=1&pageSize=1&search=KEY-TESTE").set("Authorization", `Bearer ${token}`);
   assert.equal(response.status, 200);

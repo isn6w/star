@@ -81,6 +81,7 @@ app.get("/", (_req, res) => {
 
 const deviceSchema = z.object({
   mac: z.string().min(1),
+  key: z.string().trim().regex(/^[a-zA-Z0-9]{0,10}$/, "A key deve ter apenas letras e números e até 10 caracteres.").optional().default(""),
   app: z.string().trim().min(1).max(100),
   type: z.enum(["tv", "mobile"]),
   brand: z.string().trim().max(80).optional().default(""),
@@ -88,7 +89,11 @@ const deviceSchema = z.object({
 
 const clientSchema = z.object({
   name: z.string().trim().min(2).max(120),
-  key: z.string().trim().min(1).max(255),
+  key: z.string().trim().max(255).optional().default(""),
+  email: z.string().trim().email().max(180).optional().or(z.literal("")).default(""),
+  phone: z.string().trim().max(30).optional().default(""),
+  subscriptionEndsAt: z.string().datetime().nullable().optional().default(null),
+  notifyBeforeDays: z.number().int().min(0).max(90).optional().default(3),
   devices: z.array(deviceSchema).min(1).max(100),
 });
 
@@ -106,6 +111,13 @@ function normalizeMac(raw) {
   return digits.match(/.{2}/g).join(":");
 }
 
+function normalizePhone(raw) {
+  const digits = String(raw || "").replace(/\D/g, "").slice(0, 13);
+  if (digits.length === 11) return digits.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+  if (digits.length === 10) return digits.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+  return digits;
+}
+
 function normalizeDevices(devices) {
   const normalized = devices.map((device) => {
     const mac = normalizeMac(device.mac);
@@ -113,6 +125,7 @@ function normalizeDevices(devices) {
     if (device.type === "tv" && !device.brand.trim()) throw new Error("BRAND_REQUIRED");
     return {
       mac,
+      key: device.key.trim(),
       app: device.app.trim(),
       type: device.type,
       brand: device.type === "tv" ? device.brand.trim() : "",
@@ -173,6 +186,10 @@ function formatClient(client) {
     id: client.id,
     name: client.name,
     key: client.key,
+    email: client.email,
+    phone: client.phone,
+    subscriptionEndsAt: client.subscriptionEndsAt,
+    notifyBeforeDays: client.notifyBeforeDays,
     devices: client.devices,
     createdAt: client.createdAt,
     updatedAt: client.updatedAt,
@@ -289,7 +306,7 @@ app.post("/api/clients", authRequired, async (req, res, next) => {
   try {
     const input = clientSchema.parse(req.body);
     const devices = normalizeDevices(input.devices);
-    const client = await prisma.client.create({ data: { ownerId: req.auth.sub, name: input.name, key: input.key, devices: { create: devices } }, include: { devices: true } });
+    const client = await prisma.client.create({ data: { ownerId: req.auth.sub, name: input.name, key: input.key, email: input.email.toLowerCase(), phone: normalizePhone(input.phone), subscriptionEndsAt: input.subscriptionEndsAt ? new Date(input.subscriptionEndsAt) : null, notifyBeforeDays: input.notifyBeforeDays, devices: { create: devices } }, include: { devices: true } });
     return res.status(201).json({ data: formatClient(client) });
   } catch (error) {
     if (error.message === "MAC_INVALID") return res.status(400).json({ error: "Um ou mais MACs são inválidos." });
@@ -318,7 +335,7 @@ app.patch("/api/clients/:id", authRequired, async (req, res, next) => {
     if (!existing) return res.status(404).json({ error: "Cliente não encontrado." });
     const client = await prisma.$transaction(async (transaction) => {
       await transaction.device.deleteMany({ where: { clientId: existing.id } });
-      return transaction.client.update({ where: { id: existing.id }, data: { name: input.name, key: input.key, devices: { create: devices } }, include: { devices: true } });
+      return transaction.client.update({ where: { id: existing.id }, data: { name: input.name, key: input.key, email: input.email.toLowerCase(), phone: normalizePhone(input.phone), subscriptionEndsAt: input.subscriptionEndsAt ? new Date(input.subscriptionEndsAt) : null, notifyBeforeDays: input.notifyBeforeDays, devices: { create: devices } }, include: { devices: true } });
     });
     return res.json({ data: formatClient(client) });
   } catch (error) {
