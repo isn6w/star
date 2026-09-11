@@ -52,7 +52,14 @@ select option { color: #101827; } input:focus, select:focus { border-color: #72b
 	isolation: isolate;
 	background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), #ffffff1a 0 2px, transparent 150px), radial-gradient(circle at 20% 15%, #17345b, transparent 34%), radial-gradient(circle at 85% 80%, #422349, transparent 30%), #0a0e17;
 }
-.auth-page::before, .landing-page::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .42; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E"); mix-blend-mode: screen; }
+.auth-page::before, .landing-page::before { content: ""; position: absolute; inset: -30%; z-index: -1; pointer-events: none; opacity: .3; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.2'/%3E%3C/svg%3E"); background-size: 180px 180px; mix-blend-mode: screen; animation: grain-drift .7s steps(2, end) infinite; }
+@keyframes grain-drift {
+	0% { transform: translate3d(0, 0, 0); }
+	25% { transform: translate3d(-2%, 1%, 0); }
+	50% { transform: translate3d(1%, -2%, 0); }
+	75% { transform: translate3d(2%, 2%, 0); }
+	100% { transform: translate3d(-1%, -1%, 0); }
+}
 .auth-page::after, .landing-page::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at center, transparent 30%, #02040a99 100%); }
 .auth-card { transform: perspective(1200px) rotateX(var(--card-rotate-x, 0deg)) rotateY(var(--card-rotate-y, 0deg)); transition: transform .18s ease-out; }
 .auth-card, .modal-card, .client-card { background: linear-gradient(145deg, #182337d9, #0e1522e8); border-color: #ffffff24; box-shadow: 0 30px 80px #0008, inset 0 1px #ffffff20, inset 0 -1px #0006; backdrop-filter: blur(26px) saturate(145%); }
