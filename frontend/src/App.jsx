@@ -7,11 +7,11 @@ const APPS = ["IBO Player", "IBO Pro", "IVO Player", "Smarters Player Lite", "XC
 const BRANDS = ["Samsung", "LG", "TCL", "Philco", "AOC", "Multilaser", "Philips", "Sony", "Roku TV", "Outra"];
 
 function newDevice() {
-  return { mac: "", app: "", type: "", brand: "" };
+  return { mac: "", key: "", app: "", appCustom: "", type: "", brand: "", brandCustom: "" };
 }
 
 function newClient() {
-  return { name: "", key: "", devices: [newDevice()] };
+  return { name: "", key: "", email: "", phone: "", subscriptionEndsAt: "", notifyBeforeDays: 3, devices: [newDevice()] };
 }
 
 function formatMac(value) {
@@ -22,7 +22,7 @@ function formatMac(value) {
 function validateClient(form) {
   const errors = {};
   if (form.name.trim().length < 2) errors.name = "Informe o nome do cliente.";
-  if (!form.key.trim()) errors.key = "Informe a key do cliente.";
+  if (form.key.trim() && !/^[a-zA-Z0-9]{1,10}$/.test(form.key.trim())) errors.key = "Use apenas letras e números, até 10 caracteres.";
   const macs = new Set();
   errors.devices = form.devices.map((device) => {
     const error = {};
@@ -30,9 +30,12 @@ function validateClient(form) {
     if (mac.length !== 12) error.mac = "Use o formato 00:1A:2B:3C:4D:5E.";
     else if (macs.has(mac)) error.mac = "Este MAC está repetido.";
     else macs.add(mac);
+    if (device.key && !/^[a-zA-Z0-9]{1,10}$/.test(device.key)) error.key = "Key opcional: até 10 letras ou números.";
     if (!device.app) error.app = "Selecione o aplicativo.";
+    if (device.app === "Outro" && !device.appCustom?.trim()) error.appCustom = "Informe o nome do player.";
     if (!device.type) error.type = "Selecione o dispositivo.";
     if (device.type === "tv" && !device.brand) error.brand = "Selecione a marca da TV.";
+    if (device.brand === "Outra" && !device.brandCustom?.trim()) error.brandCustom = "Informe a marca da TV.";
     return error;
   });
   if (errors.devices.some((error) => Object.keys(error).length)) return errors;
@@ -40,7 +43,23 @@ function validateClient(form) {
   return Object.keys(errors).length ? errors : null;
 }
 
-function Login({ onSuccess }) {
+function Landing({ onEnter }) {
+  return <main className="landing-page">
+    <div className="landing-noise" />
+    <div className="landing-orbit landing-orbit--blue" />
+    <div className="landing-orbit landing-orbit--pink" />
+    <section className="landing-content">
+      <div className="brand-mark brand-mark--hero">S</div>
+      <p className="eyebrow">STARTV / CUSTOMER OS</p>
+      <h1>Bem-vindo ao painel de cadastro</h1>
+      <p className="landing-lede">Todos os seus clientes em um só lugar.</p>
+      <button className="primary-button landing-cta" type="button" onClick={onEnter}><span aria-hidden="true">↗</span> Acessar o painel</button>
+      <div className="landing-note"><span className="status-dot" /> Controle simples. Dados organizados.</div>
+    </section>
+  </main>;
+}
+
+function Login({ onSuccess, onBack }) {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ username: "", password: "", email: "" });
   const [status, setStatus] = useState("idle");
@@ -69,10 +88,11 @@ function Login({ onSuccess }) {
   }
 
   return (
-    <main className="auth-page">
+    <main className="auth-page" onMouseMove={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top; event.currentTarget.style.setProperty("--mouse-x", `${x}px`); event.currentTarget.style.setProperty("--mouse-y", `${y}px`); event.currentTarget.style.setProperty("--card-rotate-y", `${((x / rect.width) - .5) * 3}deg`); event.currentTarget.style.setProperty("--card-rotate-x", `${((.5 - y / rect.height) * 3)}deg`); }}>
       <div className="auth-glow auth-glow--blue" />
       <div className="auth-glow auth-glow--pink" />
       <section className="auth-card">
+        <button className="back-button" type="button" onClick={onBack}>← Início</button>
         <div className="brand-mark">S</div>
         <p className="eyebrow">STARTV / PAINEL</p>
         <h1>{mode === "login" ? "Acesse seu painel" : "Crie seu acesso"}</h1>
@@ -94,7 +114,7 @@ function Login({ onSuccess }) {
 
 function ClientModal({ client, onClose, onSaved }) {
   const editing = Boolean(client);
-  const [form, setForm] = useState(client ? { name: client.name, key: client.key, devices: client.devices.map(({ mac, app, type, brand }) => ({ mac, app: APPS.includes(app) ? app : "Outro", type, brand: BRANDS.includes(brand) ? brand : "Outra" })) } : newClient());
+  const [form, setForm] = useState(client ? { name: client.name, key: client.key || "", email: client.email || "", phone: client.phone || "", subscriptionEndsAt: client.subscriptionEndsAt ? client.subscriptionEndsAt.slice(0, 10) : "", notifyBeforeDays: client.notifyBeforeDays ?? 3, devices: client.devices.map(({ mac, key, app, type, brand }) => ({ mac, key: key || "", app: APPS.includes(app) ? app : "Outro", appCustom: APPS.includes(app) ? "" : app, type, brand: BRANDS.includes(brand) ? brand : "Outra", brandCustom: BRANDS.includes(brand) ? "" : brand })) } : newClient());
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [errors, setErrors] = useState({});
@@ -111,7 +131,7 @@ function ClientModal({ client, onClose, onSaved }) {
     setStatus("pending");
     setError("");
     try {
-      const payload = { ...form, devices: form.devices.map((device) => ({ ...device, mac: formatMac(device.mac), brand: device.type === "tv" ? device.brand : "" })) };
+      const payload = { ...form, key: form.key.trim(), phone: form.phone.replace(/\D/g, ""), subscriptionEndsAt: form.subscriptionEndsAt ? new Date(`${form.subscriptionEndsAt}T23:59:59.000Z`).toISOString() : null, notifyBeforeDays: Number(form.notifyBeforeDays), devices: form.devices.map((device) => ({ mac: formatMac(device.mac), key: device.key.trim(), app: device.app === "Outro" ? device.appCustom.trim() : device.app, type: device.type, brand: device.type === "tv" ? (device.brand === "Outra" ? device.brandCustom.trim() : device.brand) : "" })) };
       const result = editing ? await api.updateClient(client.id, payload) : await api.createClient(payload);
       setStatus("success");
       setTimeout(() => onSaved(result.data), 650);
@@ -128,15 +148,17 @@ function ClientModal({ client, onClose, onSaved }) {
         <div className="modal-heading"><div><p className="eyebrow">CADASTRO</p><h2 id="client-modal-title">{editing ? "Editar cliente" : "Novo cliente"}</h2></div><button className="icon-button" type="button" onClick={onClose} aria-label="Fechar">×</button></div>
         <form onSubmit={submit} className="stack-form">
           <label>Nome do cliente<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Ex.: João Pereira" />{errors.name && <small className="form-error">{errors.name}</small>}</label>
-          <label>Key de ativação<input value={form.key} onChange={(event) => setForm({ ...form, key: event.target.value })} placeholder="KEY-CLIENTE" />{errors.key && <small className="form-error">{errors.key}</small>}</label>
+          <div className="form-grid"><label>Key geral <span className="field-hint">opcional · até 10 caracteres</span><input value={form.key} maxLength={10} onChange={(event) => setForm({ ...form, key: event.target.value.replace(/[^a-zA-Z0-9]/g, "") })} placeholder="ABC123" />{errors.key && <small className="form-error">{errors.key}</small>}</label><label>E-mail <span className="field-hint">opcional</span><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="cliente@email.com" /></label><label>Telefone <span className="field-hint">opcional</span><input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} placeholder="(11) 99999-9999" /></label></div>
+          <div className="form-grid subscription-fields"><label>Vencimento <span className="field-hint">opcional</span><input type="date" value={form.subscriptionEndsAt} onChange={(event) => setForm({ ...form, subscriptionEndsAt: event.target.value })} /></label><label>Avisar com antecedência<select value={form.notifyBeforeDays} onChange={(event) => setForm({ ...form, notifyBeforeDays: event.target.value })}><option value={0}>Não avisar</option><option value={3}>3 dias antes</option><option value={7}>7 dias antes</option><option value={15}>15 dias antes</option><option value={30}>30 dias antes</option></select></label></div>
           <div className="device-section"><div className="section-heading"><div><strong>Dispositivos</strong><span>Um ou mais MACs por cliente</span></div><button className="secondary-button" type="button" onClick={() => setForm({ ...form, devices: [...form.devices, newDevice()] })}>+ Adicionar MAC</button></div>
             <div className="device-list">
               {form.devices.map((device, index) => <div className="device-row" key={index}>
                 <label>MAC<input className="mono" value={device.mac} onChange={(event) => updateDevice(index, { mac: formatMac(event.target.value) })} placeholder="00:1A:2B:3C:4D:5E" />{errors.devices?.[index]?.mac && <small className="form-error">{errors.devices[index].mac}</small>}</label>
-                <label>Aplicativo<select value={device.app} onChange={(event) => updateDevice(index, { app: event.target.value })}><option value="">Selecione</option>{APPS.map((app) => <option key={app}>{app}</option>)}</select>{errors.devices?.[index]?.app && <small className="form-error">{errors.devices[index].app}</small>}</label>
+                <label>Key do dispositivo <span className="field-hint">opcional · até 10</span><input value={device.key} maxLength={10} onChange={(event) => updateDevice(index, { key: event.target.value.replace(/[^a-zA-Z0-9]/g, "") })} placeholder="MACKEY" />{errors.devices?.[index]?.key && <small className="form-error">{errors.devices[index].key}</small>}</label>
+                <label>Aplicativo<select value={device.app} onChange={(event) => updateDevice(index, { app: event.target.value })}><option value="">Selecione</option>{APPS.map((app) => <option key={app}>{app}</option>)}</select>{errors.devices?.[index]?.app && <small className="form-error">{errors.devices[index].app}</small>}{device.app === "Outro" && <><input value={device.appCustom} onChange={(event) => updateDevice(index, { appCustom: event.target.value })} placeholder="Nome do player" />{errors.devices?.[index]?.appCustom && <small className="form-error">{errors.devices[index].appCustom}</small>}</>}</label>
                 <label>Dispositivo<div className="segmented"><button type="button" className={device.type === "tv" ? "active" : ""} onClick={() => updateDevice(index, { type: "tv" })}>TV</button><button type="button" className={device.type === "mobile" ? "active" : ""} onClick={() => updateDevice(index, { type: "mobile", brand: "" })}>Mobile</button></div>{errors.devices?.[index]?.type && <small className="form-error">{errors.devices[index].type}</small>}</label>
-                {device.type === "tv" && <label>Marca<select value={device.brand} onChange={(event) => updateDevice(index, { brand: event.target.value })}><option value="">Selecione</option>{BRANDS.map((brand) => <option key={brand}>{brand}</option>)}</select>{errors.devices?.[index]?.brand && <small className="form-error">{errors.devices[index].brand}</small>}</label>}
-                <button className="remove-button" type="button" disabled={form.devices.length === 1} onClick={() => setForm({ ...form, devices: form.devices.filter((_, deviceIndex) => deviceIndex !== index) })} aria-label="Remover dispositivo">−</button>
+                {device.type === "tv" && <label>Marca<select value={device.brand} onChange={(event) => updateDevice(index, { brand: event.target.value })}><option value="">Selecione</option>{BRANDS.map((brand) => <option key={brand}>{brand}</option>)}</select>{errors.devices?.[index]?.brand && <small className="form-error">{errors.devices[index].brand}</small>}{device.brand === "Outra" && <><input value={device.brandCustom} onChange={(event) => updateDevice(index, { brandCustom: event.target.value })} placeholder="Nome da marca" />{errors.devices?.[index]?.brandCustom && <small className="form-error">{errors.devices[index].brandCustom}</small>}</>}</label>}
+                <button className="remove-button" type="button" disabled={form.devices.length === 1} onClick={() => setForm({ ...form, devices: form.devices.filter((_, deviceIndex) => deviceIndex !== index) })} aria-label="Remover dispositivo" title="Remover dispositivo">⌫</button>
               </div>)}
             </div>
           </div>
@@ -152,6 +174,7 @@ function Dashboard({ user, onLogout }) {
   const [clients, setClients] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("updated");
   const [modal, setModal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -182,6 +205,26 @@ function Dashboard({ user, onLogout }) {
 
   function savedClient() { setModal(null); loadClients(pagination.page); }
 
+  const visibleClients = [...clients].sort((first, second) => {
+    if (sort === "expiresSoon") return (first.subscriptionEndsAt || "9999").localeCompare(second.subscriptionEndsAt || "9999");
+    if (sort === "expiresLate") return (second.subscriptionEndsAt || "0000").localeCompare(first.subscriptionEndsAt || "0000");
+    return 0;
+  });
+
+  function expiryLabel(client) {
+    if (!client.subscriptionEndsAt) return "Sem vencimento";
+    const days = Math.ceil((new Date(client.subscriptionEndsAt) - new Date()) / 86400000);
+    if (days < 0) return "Vencida";
+    if (days === 0) return "Vence hoje";
+    return `Vence em ${days}d`;
+  }
+
+  const expiringClients = clients.filter((client) => {
+    if (!client.subscriptionEndsAt) return false;
+    const days = Math.ceil((new Date(client.subscriptionEndsAt) - new Date()) / 86400000);
+    return days >= 0 && days <= Number(client.notifyBeforeDays ?? 3);
+  });
+
   async function runMigration() {
     setMigration({ status: "pending", result: null, progress: null });
     try {
@@ -197,12 +240,13 @@ function Dashboard({ user, onLogout }) {
   return <main className="app-shell">
     <header className="topbar"><div className="brand"><span className="brand-mark small">S</span><div><strong>StarTV</strong><span>Painel de clientes</span></div></div><div className="topbar-actions"><span className="user-chip">{user.username}</span><button className="secondary-button" onClick={async () => { await api.logout(); onLogout(); }}>Sair</button></div></header>
     <section className="dashboard-heading"><div><p className="eyebrow">VISÃO GERAL</p><h1>Seus clientes</h1><p className="muted">Organize chaves e dispositivos com precisão.</p></div><button className="primary-button" onClick={() => setModal("new")}>+ Novo cliente</button></section>
-    <section className="toolbar"><div className="search-box"><span aria-hidden="true">⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome, key ou MAC" /></div><span className="result-count">{pagination.total} cliente{pagination.total === 1 ? "" : "s"}</span></section>
+    <section className="toolbar"><div className="search-box"><span aria-hidden="true">⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome, key ou MAC" /></div><label className="sort-control"><span aria-hidden="true">↕</span><select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Ordenar clientes"><option value="updated">Mais recentes</option><option value="expiresSoon">Vencem primeiro</option><option value="expiresLate">Vencem por último</option></select></label><span className="result-count">{pagination.total} cliente{pagination.total === 1 ? "" : "s"}</span></section>
+    {expiringClients.length > 0 && <div className="notice expiry-notice" role="status"><span aria-hidden="true">◷</span> {expiringClients.length} assinatura{expiringClients.length === 1 ? "" : "s"} perto do vencimento: {expiringClients.map((client) => client.name).join(", ")}.</div>}
     {localData.available && <section className="migration-panel"><div><p className="eyebrow">IMPORTAÇÃO SEGURA</p><strong>{localData.total} cliente{localData.total === 1 ? "" : "s"} encontrado{localData.total === 1 ? "" : "s"} no armazenamento local</strong><span>Os dados originais serão preservados como backup.</span></div><LoadingButton state={migration.status === "pending" ? "pending" : migration.status === "success" ? "success" : migration.status === "error" ? "error" : "idle"} pendingLabel="Migrando..." successLabel="Migração concluída" errorLabel="Tentar novamente" onClick={runMigration}>Migrar dados locais</LoadingButton></section>}
     {migration.progress && <div className="migration-progress">Migrando {migration.progress.current} de {migration.progress.total}: {migration.progress.name}</div>}
     {migration.result && <div className="notice migration-result" role="status">Migrados: {migration.result.migrated || 0} · Ignorados: {migration.result.skipped || 0} · Falhas: {migration.result.failed?.length || 0}{migration.result.failed?.length > 0 && <span> Revise os registros incompletos antes de tentar novamente.</span>}</div>}
     {error && <div className="notice error-notice" role="alert">{error}</div>}
-    {loading ? <div className="empty-state">Carregando clientes...</div> : clients.length === 0 ? <div className="empty-state"><strong>Nenhum cliente encontrado</strong><span>Cadastre seu primeiro cliente para começar.</span></div> : <section className="client-grid">{clients.map((client) => <article className="client-card" key={client.id}><div className="client-card-heading"><div><h2>{client.name}</h2><span className="key-label">{client.key}</span></div><button className="more-button" type="button" onClick={() => setModal(client)} aria-label={`Editar ${client.name}`}>•••</button></div><div className="device-summary">{client.devices.map((device) => <div className="device-summary-row" key={device.id}><span className="mono">{device.mac}</span><span>{device.app}</span><span className="device-tag">{device.type === "tv" ? device.brand || "TV" : "Mobile"}</span></div>)}</div><div className="card-footer"><span>{client.devices.length} dispositivo{client.devices.length === 1 ? "" : "s"}</span><div><button className="text-button" onClick={() => setModal(client)}>Editar</button><button className="danger-button" onClick={() => removeClient(client)}>Remover</button></div></div></article>)}</section>}
+    {loading ? <div className="empty-state">Carregando clientes...</div> : clients.length === 0 ? <div className="empty-state"><strong>Nenhum cliente encontrado</strong><span>Cadastre seu primeiro cliente para começar.</span></div> : <section className="client-grid">{visibleClients.map((client) => <article className="client-card" key={client.id}><div className="client-card-heading"><div><h2>{client.name}</h2><span className="key-label">{client.key || "Sem key geral"}</span></div><button className="more-button" type="button" onClick={() => setModal(client)} aria-label={`Editar ${client.name}`}>•••</button></div><div className="expiry-line"><span aria-hidden="true">◷</span>{expiryLabel(client)}</div><div className="device-summary">{client.devices.map((device) => <div className="device-summary-row" key={device.id}><span className="mono">{device.mac}</span><span>{device.app}</span><span className="device-tag">{device.key || (device.type === "tv" ? device.brand || "TV" : "Mobile")}</span></div>)}</div><div className="card-footer"><span>{client.devices.length} dispositivo{client.devices.length === 1 ? "" : "s"}</span><div><button className="text-button" onClick={() => setModal(client)}>Editar</button><button className="danger-button" onClick={() => removeClient(client)}>Remover</button></div></div></article>)}</section>}
     {pagination.pages > 1 && <nav className="pagination" aria-label="Paginação"><button disabled={pagination.page <= 1} onClick={() => loadClients(pagination.page - 1)}>Anterior</button><span>Página {pagination.page} de {pagination.pages}</span><button disabled={pagination.page >= pagination.pages} onClick={() => loadClients(pagination.page + 1)}>Próxima</button></nav>}
     {modal && <ClientModal client={modal === "new" ? null : modal} onClose={() => setModal(null)} onSaved={savedClient} />}
   </main>;
@@ -211,7 +255,9 @@ function Dashboard({ user, onLogout }) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
   useEffect(() => { if (api.hasSession()) api.getMe().then((result) => setUser(result.user)).catch(() => api.clearSession()).finally(() => setChecking(false)); else setChecking(false); }, []);
   if (checking) return <div className="boot-screen">Carregando StarTV...</div>;
-  return user ? <Dashboard user={user} onLogout={() => setUser(null)} /> : <Login onSuccess={setUser} />;
+  if (user) return <Dashboard user={user} onLogout={() => setUser(null)} />;
+  return showAuth ? <Login onSuccess={setUser} onBack={() => setShowAuth(false)} /> : <Landing onEnter={() => setShowAuth(true)} />;
 }

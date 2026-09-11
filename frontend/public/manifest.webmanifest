@@ -1,0 +1,12 @@
+{
+  "name": "StarTV Painel de Clientes",
+  "short_name": "StarTV",
+  "description": "Gerencie clientes e dispositivos StarTV.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090f19",
+  "theme_color": "#090f19",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

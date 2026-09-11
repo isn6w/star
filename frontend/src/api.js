@@ -7,8 +7,9 @@ if (import.meta.env.PROD && API_URL.includes("localhost")) {
   console.warn("VITE_API_URL ainda aponta para localhost. Configure a URL pública da API no painel da Vercel e faça um novo deploy.");
 }
 
-let accessToken = sessionStorage.getItem("startv:access-token");
-let refreshToken = sessionStorage.getItem("startv:refresh-token");
+const sessionStore = localStorage;
+let accessToken = sessionStore.getItem("startv:access-token");
+let refreshToken = sessionStore.getItem("startv:refresh-token");
 
 export function hasSession() {
   return Boolean(accessToken && refreshToken);
@@ -17,15 +18,15 @@ export function hasSession() {
 export function clearSession() {
   accessToken = null;
   refreshToken = null;
-  sessionStorage.removeItem("startv:access-token");
-  sessionStorage.removeItem("startv:refresh-token");
+  sessionStore.removeItem("startv:access-token");
+  sessionStore.removeItem("startv:refresh-token");
 }
 
 function saveSession(session) {
   accessToken = session.accessToken || session.token;
   refreshToken = session.refreshToken;
-  sessionStorage.setItem("startv:access-token", accessToken);
-  sessionStorage.setItem("startv:refresh-token", refreshToken);
+  sessionStore.setItem("startv:access-token", accessToken);
+  sessionStore.setItem("startv:refresh-token", refreshToken);
 }
 
 async function request(path, options = {}, retry = true) {
